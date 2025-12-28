@@ -18,7 +18,6 @@ class WordGuessingGame {
         this.letterStates = {}; // 记录每个字母的状态: correct, present, absent, unknown
         this.currentInput = [];
         this.currentFocusIndex = 0; // 当前聚焦的输入框索引
-        this.lastInputTime = 0; // 防止重复输入的计时器
         
         // DOM 元素
         this.elements = {
@@ -74,12 +73,13 @@ class WordGuessingGame {
         const hiddenInput = document.createElement('input');
         hiddenInput.type = 'text';
         hiddenInput.className = 'hidden-input';
-        hiddenInput.style.position = 'absolute';
-        hiddenInput.style.opacity = '0';
-        hiddenInput.style.height = '0';
-        hiddenInput.style.width = '0';
+        hiddenInput.style.position = 'fixed';
+        hiddenInput.style.top = '-100px';
+        hiddenInput.style.left = '-100px';
+        hiddenInput.style.width = '10px';
+        hiddenInput.style.height = '10px';
+        hiddenInput.style.opacity = '0.01';
         hiddenInput.style.pointerEvents = 'none';
-        hiddenInput.style.userSelect = 'none';
         
         // 防止自动大写和自动更正
         hiddenInput.autocapitalize = 'none';
@@ -90,16 +90,8 @@ class WordGuessingGame {
         document.body.appendChild(hiddenInput);
         this.elements.hiddenInput = hiddenInput;
         
-        // 监听隐藏输入框的输入事件 - 修复重复输入问题
+        // 监听隐藏输入框的输入事件
         hiddenInput.addEventListener('input', (e) => {
-            const now = Date.now();
-            // 防止短时间内重复触发
-            if (now - this.lastInputTime < 100) {
-                e.target.value = '';
-                return;
-            }
-            this.lastInputTime = now;
-            
             this.handleHiddenInput(e);
         });
         
@@ -108,14 +100,10 @@ class WordGuessingGame {
             this.handleHiddenInputKeydown(e);
         });
         
-        // 当隐藏输入框失去焦点时，清空并隐藏
+        // 当隐藏输入框失去焦点时
         hiddenInput.addEventListener('blur', () => {
-            // 延迟一点时间再隐藏，确保能处理完所有事件
-            setTimeout(() => {
-                if (document.activeElement !== hiddenInput) {
-                    hiddenInput.value = '';
-                }
-            }, 100);
+            // 移除所有焦点样式
+            this.removeAllFocusStyles();
         });
     }
     
@@ -124,23 +112,21 @@ class WordGuessingGame {
         const value = e.target.value.toLowerCase();
         if (!value) return;
         
-        // 只处理单个字母
-        if (/^[a-z]$/.test(value)) {
-            // 防止重复输入
-            if (this.currentInput[this.currentFocusIndex] === value) {
-                e.target.value = '';
-                return;
-            }
-            
-            this.addLetterToInput(value, this.currentFocusIndex);
+        // 只处理最后一个字母（防止粘贴多个字母）
+        const lastChar = value.charAt(value.length - 1);
+        
+        if (/^[a-z]$/.test(lastChar)) {
+            this.addLetterToInput(lastChar, this.currentFocusIndex);
             
             // 自动聚焦下一个输入框
             if (this.currentFocusIndex < this.wordLength - 1) {
-                this.focusInputAtIndex(this.currentFocusIndex + 1);
+                setTimeout(() => {
+                    this.focusInputAtIndex(this.currentFocusIndex + 1);
+                }, 50);
             }
         }
         
-        // 清空隐藏输入框的值，准备接收下一个输入
+        // 清空隐藏输入框的值
         e.target.value = '';
     }
     
@@ -155,7 +141,9 @@ class WordGuessingGame {
             
             // 如果当前单元格为空，则聚焦前一个单元格
             if (!this.currentInput[this.currentFocusIndex] && this.currentFocusIndex > 0) {
-                this.focusInputAtIndex(this.currentFocusIndex - 1);
+                setTimeout(() => {
+                    this.focusInputAtIndex(this.currentFocusIndex - 1);
+                }, 50);
             }
         }
         // 回车键
@@ -165,59 +153,59 @@ class WordGuessingGame {
         }
         // 方向键
         else if (key === 'arrowleft' && this.currentFocusIndex > 0) {
+            e.preventDefault();
             this.focusInputAtIndex(this.currentFocusIndex - 1);
         }
         else if (key === 'arrowright' && this.currentFocusIndex < this.wordLength - 1) {
+            e.preventDefault();
             this.focusInputAtIndex(this.currentFocusIndex + 1);
         }
         // ESC键关闭所有模态框
         else if (key === 'escape') {
             this.closeAllModals();
         }
-        // 字母键 - 直接处理，避免通过input事件重复处理
-        else if (/^[a-z]$/.test(key)) {
-            e.preventDefault();
-            const now = Date.now();
-            if (now - this.lastInputTime < 100) return;
-            this.lastInputTime = now;
-            
-            // 防止重复输入
-            if (this.currentInput[this.currentFocusIndex] === key) {
-                return;
-            }
-            
-            this.addLetterToInput(key, this.currentFocusIndex);
-            
-            // 自动聚焦下一个输入框
-            if (this.currentFocusIndex < this.wordLength - 1) {
-                this.focusInputAtIndex(this.currentFocusIndex + 1);
-            }
-        }
+        // 字母键 - 由input事件处理，这里不做处理
     }
     
     // 聚焦到指定索引的输入框
     focusInputAtIndex(index) {
         this.currentFocusIndex = index;
-        const inputCell = document.querySelector(`.letter-input[data-index="${index}"]`);
         
-        if (inputCell) {
-            // 添加焦点样式
-            this.removeAllFocusStyles();
-            inputCell.classList.add('focused');
+        // 更新焦点样式
+        this.updateFocusStyles();
+        
+        // 聚焦到隐藏的输入框
+        if (this.elements.hiddenInput) {
+            // 先确保输入框在可视区域
+            this.elements.hiddenInput.style.position = 'fixed';
+            this.elements.hiddenInput.style.top = '0';
+            this.elements.hiddenInput.style.left = '0';
+            this.elements.hiddenInput.style.width = '10px';
+            this.elements.hiddenInput.style.height = '10px';
             
-            // 聚焦到隐藏的输入框
-            if (this.elements.hiddenInput) {
-                setTimeout(() => {
-                    this.elements.hiddenInput.focus();
-                    // 确保隐藏输入框可见（对于某些移动浏览器）
-                    this.elements.hiddenInput.style.position = 'fixed';
-                    this.elements.hiddenInput.style.top = '0';
-                    this.elements.hiddenInput.style.left = '0';
-                    this.elements.hiddenInput.style.width = '1px';
-                    this.elements.hiddenInput.style.height = '1px';
-                }, 10);
-            }
+            // 延迟一点时间再聚焦，确保DOM更新完成
+            setTimeout(() => {
+                this.elements.hiddenInput.focus();
+                // 对于iOS设备，可能需要额外的处理
+                if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+                    this.elements.hiddenInput.style.position = 'absolute';
+                    this.elements.hiddenInput.style.width = '100%';
+                    this.elements.hiddenInput.style.height = '40px';
+                    this.elements.hiddenInput.style.top = '50%';
+                }
+            }, 100);
         }
+    }
+    
+    // 更新焦点样式
+    updateFocusStyles() {
+        const inputCells = document.querySelectorAll('.letter-input');
+        inputCells.forEach((cell, index) => {
+            cell.classList.remove('focused');
+            if (index === this.currentFocusIndex) {
+                cell.classList.add('focused');
+            }
+        });
     }
     
     // 移除所有输入框的焦点样式
@@ -289,7 +277,8 @@ class WordGuessingGame {
         
         // 点击页面其他区域移除焦点
         document.addEventListener('click', (e) => {
-            if (!e.target.classList.contains('letter-input')) {
+            if (!e.target.classList.contains('letter-input') && 
+                !e.target.classList.contains('letter-item')) {
                 this.removeAllFocusStyles();
                 if (this.elements.hiddenInput) {
                     this.elements.hiddenInput.blur();
@@ -667,6 +656,9 @@ class WordGuessingGame {
             cell.textContent = letter ? letter.toUpperCase() : '';
             cell.className = `letter-input ${letter ? 'filled' : 'empty'}`;
         });
+        
+        // 更新焦点样式
+        this.updateFocusStyles();
     }
     
     // 更新检查按钮状态
@@ -1130,12 +1122,12 @@ class WordGuessingGame {
     
     // 分享结果
     shareResult() {
-        const resultText = `我在单词猜猜猜游戏中用 ${this.currentAttempt} 次尝试猜出了 ${this.wordLength} 字母单词 ${this.targetWord.toUpperCase()}！`;
+        const resultText = `我在企鹅猜词中用 ${this.currentAttempt} 次尝试猜出了 ${this.wordLength} 字母单词 ${this.targetWord.toUpperCase()}！`;
         
         // 尝试使用Web Share API
         if (navigator.share) {
             navigator.share({
-                title: '单词猜猜猜',
+                title: '企鹅猜词',
                 text: resultText,
                 url: window.location.href
             }).catch(err => {

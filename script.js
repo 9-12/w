@@ -639,7 +639,7 @@ class WordGuessingGame {
         return this.currentInput.every(letter => letter !== '');
     }
     
-    // 检查猜测
+    // 检查猜测 - 移除词库检查
     checkGuess() {
         // 验证当前行是否已填满
         if (!this.isCurrentRowFull()) {
@@ -650,19 +650,8 @@ class WordGuessingGame {
         // 获取用户输入的单词
         const guess = this.currentInput.join('');
         
-        // 检查是否是有效单词（在词库中）
-        if (!this.wordList.includes(guess)) {
-            this.showMessage(`"${guess.toUpperCase()}" 不在词库中，请尝试其他单词。`, 'warning');
-            return;
-        }
-        
-        // 检查单词长度是否正确
-        if (guess.length !== this.wordLength) {
-            this.showMessage(`请输入 ${this.wordLength} 个字母的单词！`, 'warning');
-            return;
-        }
-        
-        // 验证猜测并获取反馈
+        // 不再检查是否是有效单词（在词库中）
+        // 直接验证猜测并获取反馈
         const feedback = this.validateGuess(guess);
         
         // 添加到历史记录
@@ -1086,7 +1075,7 @@ class WordGuessingGame {
         }
     }
     
-    // 分享结果 - 更新为"企鹅猜词"
+    // 分享结果 - 使用"企鹅猜词"
     shareResult() {
         const resultText = `我在企鹅猜词游戏中用 ${this.currentAttempt} 次尝试猜出了 ${this.wordLength} 字母单词 ${this.targetWord.toUpperCase()}！`;
         

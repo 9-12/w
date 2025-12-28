@@ -5,16 +5,20 @@ class WordGuessingGame {
     constructor() {
         // 游戏状态
         this.targetWord = '';
-        this.wordLength = 0;
+        this.wordLength = 5; // 默认5位，但用户可以修改
+        this.minWordLength = 3; // 从词库中检测
+        this.maxWordLength = 10; // 从词库中检测
         this.currentAttempt = 1;
         this.maxAttempts = 10;
         this.attemptsHistory = [];
         this.gameHistory = [];
         this.bestRecord = localStorage.getItem('wordGuessBestRecord') || null;
         this.wordList = [];
+        this.filteredWordList = []; // 根据长度筛选后的词库
         this.letterStates = {}; // 记录每个字母的状态: correct, present, absent, unknown
         this.currentInput = [];
         this.currentFocusIndex = 0; // 当前聚焦的输入框索引
+        this.lastInputTime = 0; // 防止重复输入的计时器
         
         // DOM 元素
         this.elements = {
@@ -48,7 +52,8 @@ class WordGuessingGame {
             confirmReveal: document.getElementById('confirm-reveal'),
             playAgain: document.getElementById('play-again'),
             shareResult: document.getElementById('share-result'),
-            hiddenInput: null // 将用于移动端输入的隐藏input
+            hiddenInput: null, // 将用于移动端输入的隐藏input
+            wordLengthSelect: null // 单词长度选择器
         };
         
         // 创建隐藏的输入框用于移动端
@@ -80,12 +85,21 @@ class WordGuessingGame {
         hiddenInput.autocapitalize = 'none';
         hiddenInput.autocorrect = 'off';
         hiddenInput.spellcheck = false;
+        hiddenInput.inputmode = 'text'; // 确保弹出字母键盘
         
         document.body.appendChild(hiddenInput);
         this.elements.hiddenInput = hiddenInput;
         
-        // 监听隐藏输入框的输入事件
+        // 监听隐藏输入框的输入事件 - 修复重复输入问题
         hiddenInput.addEventListener('input', (e) => {
+            const now = Date.now();
+            // 防止短时间内重复触发
+            if (now - this.lastInputTime < 100) {
+                e.target.value = '';
+                return;
+            }
+            this.lastInputTime = now;
+            
             this.handleHiddenInput(e);
         });
         
@@ -110,8 +124,14 @@ class WordGuessingGame {
         const value = e.target.value.toLowerCase();
         if (!value) return;
         
-        // 只处理字母
+        // 只处理单个字母
         if (/^[a-z]$/.test(value)) {
+            // 防止重复输入
+            if (this.currentInput[this.currentFocusIndex] === value) {
+                e.target.value = '';
+                return;
+            }
+            
             this.addLetterToInput(value, this.currentFocusIndex);
             
             // 自动聚焦下一个输入框
@@ -154,6 +174,25 @@ class WordGuessingGame {
         else if (key === 'escape') {
             this.closeAllModals();
         }
+        // 字母键 - 直接处理，避免通过input事件重复处理
+        else if (/^[a-z]$/.test(key)) {
+            e.preventDefault();
+            const now = Date.now();
+            if (now - this.lastInputTime < 100) return;
+            this.lastInputTime = now;
+            
+            // 防止重复输入
+            if (this.currentInput[this.currentFocusIndex] === key) {
+                return;
+            }
+            
+            this.addLetterToInput(key, this.currentFocusIndex);
+            
+            // 自动聚焦下一个输入框
+            if (this.currentFocusIndex < this.wordLength - 1) {
+                this.focusInputAtIndex(this.currentFocusIndex + 1);
+            }
+        }
     }
     
     // 聚焦到指定索引的输入框
@@ -163,17 +202,20 @@ class WordGuessingGame {
         
         if (inputCell) {
             // 添加焦点样式
+            this.removeAllFocusStyles();
             inputCell.classList.add('focused');
             
             // 聚焦到隐藏的输入框
             if (this.elements.hiddenInput) {
-                this.elements.hiddenInput.focus();
-                // 确保隐藏输入框可见（对于某些移动浏览器）
-                this.elements.hiddenInput.style.position = 'fixed';
-                this.elements.hiddenInput.style.top = '0';
-                this.elements.hiddenInput.style.left = '0';
-                this.elements.hiddenInput.style.width = '1px';
-                this.elements.hiddenInput.style.height = '1px';
+                setTimeout(() => {
+                    this.elements.hiddenInput.focus();
+                    // 确保隐藏输入框可见（对于某些移动浏览器）
+                    this.elements.hiddenInput.style.position = 'fixed';
+                    this.elements.hiddenInput.style.top = '0';
+                    this.elements.hiddenInput.style.left = '0';
+                    this.elements.hiddenInput.style.width = '1px';
+                    this.elements.hiddenInput.style.height = '1px';
+                }, 10);
             }
         }
     }
@@ -283,13 +325,127 @@ class WordGuessingGame {
                 this.loadDefaultWordList();
             }
             
+            // 检测词库中的最短和最长单词
+            this.detectWordLengthRange();
+            
+            // 创建单词长度选择器
+            this.createWordLengthSelector();
+            
+            // 根据当前长度筛选词库
+            this.filterWordListByLength();
+            
             this.elements.wordCount.textContent = this.wordList.length;
             this.startNewGame();
         } catch (error) {
             console.warn(error.message);
             this.loadDefaultWordList();
-            this.startNewGame();
         }
+    }
+    
+    // 检测词库中的单词长度范围
+    detectWordLengthRange() {
+        if (this.wordList.length === 0) return;
+        
+        // 找出最短和最长的单词
+        const lengths = this.wordList.map(word => word.length);
+        this.minWordLength = Math.min(...lengths);
+        this.maxWordLength = Math.max(...lengths);
+        
+        // 确保当前单词长度在有效范围内
+        if (this.wordLength < this.minWordLength) {
+            this.wordLength = this.minWordLength;
+        } else if (this.wordLength > this.maxWordLength) {
+            this.wordLength = this.maxWordLength;
+        }
+        
+        console.log(`词库检测: 最短 ${this.minWordLength} 字母, 最长 ${this.maxWordLength} 字母`);
+    }
+    
+    // 创建单词长度选择器
+    createWordLengthSelector() {
+        // 创建选择器容器
+        const selectorContainer = document.createElement('div');
+        selectorContainer.className = 'word-length-selector';
+        
+        // 创建标签
+        const label = document.createElement('span');
+        label.className = 'selector-label';
+        label.textContent = '单词长度:';
+        
+        // 创建选择器
+        const select = document.createElement('select');
+        select.id = 'word-length-select';
+        select.className = 'length-select';
+        
+        // 添加选项
+        for (let i = this.minWordLength; i <= this.maxWordLength; i++) {
+            const option = document.createElement('option');
+            option.value = i;
+            option.textContent = `${i} 字母`;
+            if (i === this.wordLength) {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        }
+        
+        // 添加事件监听
+        select.addEventListener('change', (e) => {
+            const newLength = parseInt(e.target.value);
+            if (newLength !== this.wordLength) {
+                this.wordLength = newLength;
+                this.filterWordListByLength();
+                this.startNewGame();
+            }
+        });
+        
+        // 组装选择器
+        selectorContainer.appendChild(label);
+        selectorContainer.appendChild(select);
+        
+        // 插入到游戏信息区域
+        const gameInfo = document.querySelector('.game-info');
+        if (gameInfo) {
+            // 在现有信息项之前插入
+            gameInfo.insertBefore(selectorContainer, gameInfo.firstChild);
+            this.elements.wordLengthSelect = select;
+        }
+    }
+    
+    // 根据长度筛选词库
+    filterWordListByLength() {
+        if (this.wordList.length === 0) return;
+        
+        this.filteredWordList = this.wordList.filter(word => word.length === this.wordLength);
+        
+        if (this.filteredWordList.length === 0) {
+            // 如果没有该长度的单词，选择最接近的长度
+            console.warn(`没有找到 ${this.wordLength} 个字母的单词，自动调整长度`);
+            
+            // 找到有单词的长度
+            const availableLengths = [...new Set(this.wordList.map(word => word.length))].sort((a, b) => a - b);
+            
+            // 找到最接近的长度
+            let closestLength = availableLengths[0];
+            let minDiff = Math.abs(this.wordLength - closestLength);
+            
+            for (const length of availableLengths) {
+                const diff = Math.abs(this.wordLength - length);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    closestLength = length;
+                }
+            }
+            
+            this.wordLength = closestLength;
+            this.filteredWordList = this.wordList.filter(word => word.length === this.wordLength);
+            
+            // 更新选择器
+            if (this.elements.wordLengthSelect) {
+                this.elements.wordLengthSelect.value = this.wordLength;
+            }
+        }
+        
+        console.log(`已筛选出 ${this.filteredWordList.length} 个 ${this.wordLength} 字母的单词`);
     }
     
     // 加载默认词库（如果words.txt不存在）
@@ -312,15 +468,29 @@ class WordGuessingGame {
         
         this.wordList = defaultWords;
         this.elements.wordCount.textContent = this.wordList.length;
+        
+        // 检测词库中的最短和最长单词
+        this.detectWordLengthRange();
+        
+        // 创建单词长度选择器
+        this.createWordLengthSelector();
+        
+        // 根据当前长度筛选词库
+        this.filterWordListByLength();
+        
         this.showMessage('使用内置词库，共' + defaultWords.length + '个单词', 'info');
     }
     
     // 开始新游戏
     startNewGame() {
+        // 确保词库已筛选
+        if (this.filteredWordList.length === 0) {
+            this.filterWordListByLength();
+        }
+        
         // 选择一个随机单词
-        const randomIndex = Math.floor(Math.random() * this.wordList.length);
-        this.targetWord = this.wordList[randomIndex];
-        this.wordLength = this.targetWord.length;
+        const randomIndex = Math.floor(Math.random() * this.filteredWordList.length);
+        this.targetWord = this.filteredWordList[randomIndex];
         
         // 重置游戏状态
         this.currentAttempt = 1;
@@ -344,7 +514,7 @@ class WordGuessingGame {
         this.showMessage(`新游戏开始！目标单词有 ${this.wordLength} 个字母。点击下划线开始输入。`, 'info');
         
         // 调试用 - 控制台显示答案（正式发布时可移除）
-        console.log('目标单词:', this.targetWord);
+        console.log('目标单词:', this.targetWord, `(${this.wordLength}字母)`);
     }
     
     // 更新游戏信息显示
@@ -353,6 +523,11 @@ class WordGuessingGame {
         this.elements.attemptCount.textContent = this.currentAttempt - 1;
         this.elements.bestRecord.textContent = this.bestRecord ? this.bestRecord : '-';
         this.elements.currentAttempt.textContent = this.currentAttempt;
+        
+        // 更新选择器（如果存在）
+        if (this.elements.wordLengthSelect) {
+            this.elements.wordLengthSelect.value = this.wordLength;
+        }
     }
     
     // 创建字母状态网格
@@ -491,11 +666,6 @@ class WordGuessingGame {
             const letter = this.currentInput[index];
             cell.textContent = letter ? letter.toUpperCase() : '';
             cell.className = `letter-input ${letter ? 'filled' : 'empty'}`;
-            
-            // 如果这个单元格是当前焦点，添加焦点样式
-            if (index === this.currentFocusIndex) {
-                cell.classList.add('focused');
-            }
         });
     }
     
@@ -525,6 +695,12 @@ class WordGuessingGame {
         // 检查是否是有效单词（在词库中）
         if (!this.wordList.includes(guess)) {
             this.showMessage(`"${guess.toUpperCase()}" 不在词库中，请尝试其他单词。`, 'warning');
+            return;
+        }
+        
+        // 检查单词长度是否正确
+        if (guess.length !== this.wordLength) {
+            this.showMessage(`请输入 ${this.wordLength} 个字母的单词！`, 'warning');
             return;
         }
         
@@ -763,6 +939,7 @@ class WordGuessingGame {
     addToGameHistory(isWin, attempts) {
         const historyItem = {
             word: this.targetWord,
+            wordLength: this.wordLength,
             attempts: attempts,
             isWin: isWin,
             date: new Date().toLocaleDateString('zh-CN'),
@@ -800,7 +977,7 @@ class WordGuessingGame {
             historyItem.className = `game-history-item ${item.isWin ? 'win' : 'lose'}`;
             
             historyItem.innerHTML = `
-                <div class="history-word">${item.word.toUpperCase()}</div>
+                <div class="history-word">${item.word.toUpperCase()} <span class="word-length-badge">${item.wordLength}字母</span></div>
                 <div class="history-stats">
                     <span>${item.isWin ? '胜利' : '失败'}</span>
                     <span>${item.attempts} 次尝试</span>
@@ -819,7 +996,7 @@ class WordGuessingGame {
     
     // 查看游戏历史详情
     viewGameHistory(historyItem) {
-        alert(`单词: ${historyItem.word.toUpperCase()}\n结果: ${historyItem.isWin ? '胜利' : '失败'}\n尝试次数: ${historyItem.attempts}\n日期: ${historyItem.date}`);
+        alert(`单词: ${historyItem.word.toUpperCase()}\n长度: ${historyItem.wordLength}字母\n结果: ${historyItem.isWin ? '胜利' : '失败'}\n尝试次数: ${historyItem.attempts}\n日期: ${historyItem.date}`);
     }
     
     // 保存游戏历史到本地存储
@@ -953,7 +1130,7 @@ class WordGuessingGame {
     
     // 分享结果
     shareResult() {
-        const resultText = `我在单词猜猜猜游戏中用 ${this.currentAttempt} 次尝试猜出了单词 ${this.targetWord.toUpperCase()}！`;
+        const resultText = `我在单词猜猜猜游戏中用 ${this.currentAttempt} 次尝试猜出了 ${this.wordLength} 字母单词 ${this.targetWord.toUpperCase()}！`;
         
         // 尝试使用Web Share API
         if (navigator.share) {

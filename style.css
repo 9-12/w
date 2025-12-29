@@ -1,4 +1,4 @@
-/* 猜词游戏 - 样式表 */
+/* 企鹅猜词 - 样式表 */
 /* 高级毛玻璃圆角扁平风格 */
 
 :root {
@@ -125,6 +125,7 @@ body {
 .game-info {
   display: flex;
   gap: var(--spacing-xl);
+  align-items: center;
 }
 
 .info-item {
@@ -147,6 +148,54 @@ body {
 
 .best-record .value {
   color: var(--success-color);
+}
+
+/* 单词长度选择器样式 */
+.word-length-selector {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.selector-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.length-select {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  min-width: 100px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: all var(--transition-speed);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237f8c8d' d='M6 8.825L1.175 4 2.238 2.938 6 6.7l3.763-3.763L10.825 4z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--spacing-sm) center;
+  background-size: 12px;
+  padding-right: var(--spacing-xl);
+}
+
+.dark-theme .length-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23bdc3c7' d='M6 8.825L1.175 4 2.238 2.938 6 6.7l3.763-3.763L10.825 4z'/%3E%3C/svg%3E");
+}
+
+.length-select:hover {
+  border-color: var(--primary-color);
+  box-shadow: 0 4px 12px rgba(67, 97, 238, 0.1);
+}
+
+.length-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
 }
 
 /* 主游戏区域 */
@@ -223,6 +272,12 @@ body {
   font-size: 1.2rem;
   border-radius: 10px;
   transition: all var(--transition-speed);
+  cursor: pointer;
+  user-select: none;
+}
+
+.letter-item:hover {
+  transform: scale(1.05);
 }
 
 .letter-correct {
@@ -251,6 +306,108 @@ body {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
+/* 候选字母面板 */
+.candidate-panel {
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  background: var(--card-bg);
+  border-radius: var(--border-radius);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.candidate-panel .panel-header h3 {
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+
+.position-hint-row {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  justify-content: center;
+}
+
+.position-cell {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  border-radius: 8px;
+  background-color: var(--card-bg);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 2px solid transparent;
+}
+
+.position-cell.correct-position {
+  background-color: var(--success-color);
+  color: white;
+  border-color: var(--success-color);
+}
+
+.position-cell.unknown-position {
+  background-color: transparent;
+  color: var(--text-secondary);
+  border: 2px dashed rgba(0, 0, 0, 0.1);
+}
+
+.dark-theme .position-cell.unknown-position {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.candidate-letters {
+  margin-top: var(--spacing-sm);
+}
+
+.candidate-title {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-sm);
+  text-align: center;
+}
+
+.candidate-letter-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  justify-content: center;
+}
+
+.candidate-letter {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 6px;
+  background-color: var(--card-bg);
+  color: var(--text-primary);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  transition: all var(--transition-speed);
+}
+
+.candidate-letter.candidate-correct {
+  background-color: var(--success-color);
+  color: white;
+}
+
+.candidate-letter.candidate-present {
+  background-color: var(--warning-color);
+  color: white;
+}
+
+.no-candidates {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  text-align: center;
+  padding: var(--spacing-sm);
+  font-style: italic;
+}
+
 /* 游戏主面板 */
 .game-board {
   flex: 1;
@@ -265,6 +422,7 @@ body {
   padding-right: var(--spacing-sm);
   margin-bottom: var(--spacing-lg);
   max-height: 400px;
+  scroll-behavior: smooth;
 }
 
 /* 历史记录项 */
@@ -272,6 +430,12 @@ body {
   margin-bottom: var(--spacing-lg);
   position: relative;
   animation: slideInUp 0.5s ease-out;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.history-item.faded {
+  opacity: 0.5;
 }
 
 .history-item:not(:last-child)::after {
@@ -317,7 +481,7 @@ body {
   justify-content: center;
   font-size: 1.8rem;
   font-weight: 700;
-  text-transform: uppercase;
+  text-transform: lowercase;
   border: 2px solid transparent;
   background-color: var(--card-bg);
   border-radius: 12px;
@@ -325,6 +489,7 @@ body {
   transition: all var(--transition-speed);
   cursor: pointer;
   color: var(--text-primary);
+  user-select: none;
 }
 
 .letter-input.empty {
@@ -347,11 +512,14 @@ body {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-.letter-input:focus {
-  outline: none;
+.letter-input.focused {
   border-color: var(--primary-color);
   transform: scale(1.05);
   box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+}
+
+.letter-input:focus {
+  outline: none;
 }
 
 .feedback-row {
@@ -540,6 +708,22 @@ body {
   font-weight: 700;
   font-size: 1.2rem;
   margin-bottom: var(--spacing-xs);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.word-length-badge {
+  font-size: 0.75rem;
+  background-color: rgba(0, 0, 0, 0.1);
+  color: var(--text-secondary);
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: 500;
+}
+
+.dark-theme .word-length-badge {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .history-stats {
@@ -634,6 +818,7 @@ body {
   background: rgba(0, 0, 0, 0.05);
   border-radius: 12px;
   font-family: 'Roboto Slab', serif;
+  text-transform: lowercase;
 }
 
 .dark-theme .answer-word {
@@ -659,6 +844,7 @@ body {
   color: var(--success-color);
   font-weight: 700;
   font-size: 1.5rem;
+  text-transform: lowercase;
 }
 
 .win-attempts {
@@ -789,6 +975,10 @@ body {
   .letter-grid {
     grid-template-columns: repeat(8, 1fr);
   }
+  
+  .candidate-letter-grid {
+    grid-template-columns: repeat(10, 1fr);
+  }
 }
 
 @media (max-width: 768px) {
@@ -801,6 +991,8 @@ body {
   .game-info {
     width: 100%;
     justify-content: space-around;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
   }
   
   .controls {
@@ -813,6 +1005,10 @@ body {
   
   .letter-grid {
     grid-template-columns: repeat(6, 1fr);
+  }
+  
+  .candidate-letter-grid {
+    grid-template-columns: repeat(8, 1fr);
   }
   
   .footer {
@@ -842,6 +1038,17 @@ body {
     gap: var(--spacing-md);
   }
   
+  .word-length-selector {
+    order: -1;
+    width: 100%;
+    justify-content: center;
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .length-select {
+    min-width: 120px;
+  }
+  
   .letter-grid {
     grid-template-columns: repeat(5, 1fr);
   }
@@ -853,6 +1060,16 @@ body {
   .answer-word {
     font-size: 1.8rem;
     letter-spacing: 4px;
+  }
+  
+  .candidate-letter-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+  
+  .position-cell {
+    width: 30px;
+    height: 30px;
+    font-size: 1.2rem;
   }
 }
 

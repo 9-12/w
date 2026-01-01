@@ -3,74 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>企鹅猜词 - 致敬世界上跑得最快的企鹅</title>
+    <title>企鹅猜词 - Penguin Word Guess</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto+Slab:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔤</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐧</text></svg>">
 </head>
 <body>
     <div class="container">
         <!-- 头部区域 -->
         <header class="header">
             <div class="logo">
-                <i class="fas fa-spell-check"></i>
+                <i class="fas fa-paw"></i>
                 <h1>企鹅猜词</h1>
+                <span class="subtitle">Penguin Word Guess</span>
             </div>
             <div class="game-info">
                 <div class="info-item">
-                    <span class="label">目标单词长度:</span>
+                    <span class="label">单词长度:</span>
                     <span id="word-length" class="value">5</span>
                 </div>
                 <div class="info-item">
-                    <span class="label">当前尝试次数:</span>
+                    <span class="label">当前尝试:</span>
                     <span id="attempt-count" class="value">0</span>
                 </div>
                 <div class="info-item best-record">
                     <span class="label">最佳记录:</span>
                     <span id="best-record" class="value">-</span>
                 </div>
+                <div class="info-item">
+                    <span class="label">词库词汇:</span>
+                    <span id="word-count" class="value">0</span>
+                </div>
             </div>
         </header>
 
         <!-- 主游戏区域 -->
         <main class="game-container">
-            <!-- 字母状态面板 -->
-            <div class="letter-status-panel">
-                <div class="panel-header">
-                    <h3><i class="fas fa-keyboard"></i> 字母状态</h3>
-                    <button id="toggle-letters" class="icon-btn" title="展开/收起字母表">
-                        <i class="fas fa-chevron-down"></i>
-                    </button>
+            <!-- 左栏：字母状态和候选字母提示（桌面端） -->
+            <div class="left-panel">
+                <!-- 字母状态面板 -->
+                <div class="letter-status-panel glass-effect">
+                    <div class="panel-header">
+                        <h3><i class="fas fa-keyboard"></i> 字母状态</h3>
+                        <button id="toggle-letters" class="icon-btn" title="展开/收起字母表">
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                    </div>
+                    <div id="letter-status" class="letter-grid">
+                        <!-- 字母状态将通过JavaScript动态生成 -->
+                    </div>
                 </div>
-                <div id="letter-status" class="letter-grid">
-                    <!-- 字母状态将通过JavaScript动态生成 -->
+
+                <!-- 候选字母面板 -->
+                <div id="candidate-panel" class="candidate-panel glass-effect">
+                    <div class="panel-header">
+                        <h3><i class="fas fa-lightbulb"></i> 候选字母提示</h3>
+                    </div>
+                    <div id="position-hint-row" class="position-hint-row">
+                        <!-- 位置提示行将通过JavaScript动态生成 -->
+                    </div>
+                    <div id="candidate-letters" class="candidate-section">
+                        <div class="candidate-title">可能的候选字母:</div>
+                        <div class="candidate-letter-grid">
+                            <!-- 候选字母将通过JavaScript动态生成 -->
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- 游戏区域 -->
-            <div class="game-board">
-                <!-- 历史猜测记录 -->
-                <div id="history-container" class="history-container">
-                    <!-- 历史猜测记录将通过JavaScript动态生成 -->
-                </div>
-                
-
-                <!-- 当前输入行 -->
-                <div class="current-input-container">
-                    <div class="attempt-number">#<span id="current-attempt">1</span></div>
-                    <div class="input-row">
-                        <!-- 当前输入行的字母位将通过JavaScript动态生成 -->
-                    </div>
-                    <div class="feedback-row">
-                        <!-- 反馈行将通过JavaScript动态生成 -->
-                    </div>
-                </div>
-
+            <!-- 中栏：游戏控制、当前输入和历史记录 -->
+            <div class="center-panel">
                 <!-- 控制按钮 -->
-                <div class="controls">
+                <div class="controls glass-effect">
                     <button id="check-btn" class="btn check-btn" disabled>
                         <i class="fas fa-play"></i> 检查 (Go!)
                     </button>
@@ -85,32 +92,121 @@
                     </button>
                 </div>
 
+                <!-- 当前输入行 -->
+                <div class="current-input-container glass-effect">
+                    <div class="attempt-number">当前尝试: #<span id="current-attempt">1</span></div>
+                    <div class="input-row">
+                        <!-- 当前输入行的字母位将通过JavaScript动态生成 -->
+                    </div>
+                    <div class="feedback-row">
+                        <!-- 反馈行将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+
                 <!-- 消息通知区域 -->
-                <div id="message-area" class="message-area">
+                <div id="message-area" class="message-area glass-effect">
                     <div id="message" class="message">
-                        欢迎来到单词猜猜猜！请点击任意下划线开始输入字母。
+                        欢迎来到企鹅猜词！请点击任意下划线开始输入字母。
+                    </div>
+                </div>
+
+                <!-- 历史推理记录 -->
+                <div class="history-section glass-effect">
+                    <div class="section-header">
+                        <h3><i class="fas fa-history"></i> 历史推理记录</h3>
+                        <div class="history-stats">
+                            <span id="history-count">0</span> 条记录
+                        </div>
+                    </div>
+                    <div id="history-container" class="history-container">
+                        <!-- 历史推理记录将通过JavaScript动态生成 -->
+                        <div class="empty-history">
+                            <i class="fas fa-scroll"></i>
+                            <p>暂无历史推理记录</p>
+                            <small>每次猜测后会显示在这里</small>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 游戏历史侧边栏 -->
-            <div class="history-sidebar">
-                <div class="sidebar-header">
-                    <h3><i class="fas fa-history"></i> 游戏历史</h3>
-                    <button id="clear-history" class="icon-btn" title="清空历史记录">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                </div>
-                <div id="history-list" class="history-list">
-                    <div class="empty-history">
-                        <i class="fas fa-scroll"></i>
-                        <p>暂无游戏历史</p>
+            <!-- 右栏：游戏历史（桌面端） -->
+            <div class="right-panel">
+                <div class="game-history glass-effect">
+                    <div class="section-header">
+                        <h3><i class="fas fa-trophy"></i> 游戏历史</h3>
+                        <button id="clear-history" class="icon-btn" title="清空历史记录">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
                     </div>
-                    <!-- 游戏历史将通过JavaScript动态生成 -->
+                    <div id="history-list" class="history-list">
+                        <div class="empty-history">
+                            <i class="fas fa-scroll"></i>
+                            <p>暂无游戏历史</p>
+                            <small>每轮游戏结束后会显示在这里</small>
+                        </div>
+                        <!-- 游戏历史将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+
+                <!-- 单词长度选择器 -->
+                <div class="length-selector glass-effect">
+                    <div class="section-header">
+                        <h3><i class="fas fa-ruler"></i> 单词长度</h3>
+                    </div>
+                    <div class="selector-content">
+                        <p>选择单词长度开始游戏：</p>
+                        <div class="length-options">
+                            <!-- 单词长度选项将通过JavaScript动态生成 -->
+                        </div>
+                        <p class="selector-note">长度根据词库自动生成</p>
+                    </div>
+                </div>
+
+                <!-- 游戏设置 -->
+                <div class="settings glass-effect">
+                    <div class="section-header">
+                        <h3><i class="fas fa-cog"></i> 游戏设置</h3>
+                    </div>
+                    <div class="settings-content">
+                        <div class="setting-item">
+                            <span>暗色模式</span>
+                            <button id="toggle-theme" class="toggle-btn">
+                                <span class="toggle-slider"></span>
+                            </button>
+                        </div>
+                        <div class="setting-item">
+                            <span>键盘帮助</span>
+                            <button id="keyboard-help" class="icon-btn">
+                                <i class="fas fa-question-circle"></i>
+                            </button>
+                        </div>
+                        <div class="setting-item">
+                            <span>分享游戏</span>
+                            <button id="share-game" class="icon-btn">
+                                <i class="fas fa-share-alt"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
 
+        <!-- 底部区域 -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-info">
+                    <p>企鹅猜词 | 开发者：林昱辰 | 致敬世界上跑得最快的企鹅</p>
+                    <p class="footer-note">词库: <span id="word-count">0</span> 个单词</p>
+                </div>
+                <div class="footer-links">
+                    <a href="#" id="toggle-help"><i class="fas fa-question-circle"></i> 游戏说明</a>
+                    <a href="#" id="toggle-about"><i class="fas fa-info-circle"></i> 关于游戏</a>
+                </div>
+            </div>
+        </footer>
+
+        <!-- 模态框区域 -->
+        
         <!-- 答案模态框 -->
         <div id="answer-modal" class="modal">
             <div class="modal-content">
@@ -136,8 +232,8 @@
         <!-- 游戏结束模态框 -->
         <div id="win-modal" class="modal">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h3><i class="fas fa-trophy"></i> 恭喜！</h3>
+                <div class="modal-header success-header">
+                    <h3><i class="fas fa-trophy"></i> 恭喜！挑战成功！</h3>
                     <button class="close-modal">&times;</button>
                 </div>
                 <div class="modal-body">
@@ -180,8 +276,8 @@
                         <p>表示字母不在单词中的任何位置。</p>
                     </div>
                     <div class="hint-section">
-                        <h4><i class="fas fa-keyboard" style="color: #3498db;"></i> 字母状态面板</h4>
-                        <p>显示所有字母的状态：绿色=完全正确，黄色=位置错误，灰色=不存在，白色=未使用。</p>
+                        <h4><i class="fas fa-lightbulb" style="color: #3498db;"></i> 候选字母提示</h4>
+                        <p>显示已确认的字母位置和可能的候选字母，帮助你推理。</p>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -190,47 +286,103 @@
             </div>
         </div>
 
-        <!-- 底部区域 -->
-        <footer class="footer">
-            <p>企鹅猜词 | 开发者：林昱辰 | 词库: <span id="word-count">0</span> 个单词 | 致敬世界上跑得最快的企鹅</p>
-            <div class="footer-links">
-                <a href="#" id="toggle-theme"><i class="fas fa-moon"></i> 暗色模式</a>
-                <a href="#" id="keyboard-help"><i class="fas fa-question-circle"></i> 键盘帮助</a>
+        <!-- 键盘帮助模态框 -->
+        <div id="keyboard-help-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-keyboard"></i> 键盘快捷键</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="shortcut">
+                        <span class="key">字母 A-Z</span>
+                        <span class="desc">输入字母</span>
+                    </div>
+                    <div class="shortcut">
+                        <span class="key">Backspace</span>
+                        <span class="desc">删除上一个字母</span>
+                    </div>
+                    <div class="shortcut">
+                        <span class="key">Enter</span>
+                        <span class="desc">提交猜测</span>
+                    </div>
+                    <div class="shortcut">
+                        <span class="key">方向键 ← →</span>
+                        <span class="desc">在输入框之间移动</span>
+                    </div>
+                    <div class="shortcut">
+                        <span class="key">Esc</span>
+                        <span class="desc">关闭所有模态框</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn confirm-btn close-modal">知道了</button>
+                </div>
             </div>
-        </footer>
-    </div>
+        </div>
 
-    <!-- 键盘帮助模态框 -->
-    <div id="keyboard-help-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-keyboard"></i> 键盘快捷键</h3>
-                <button class="close-modal">&times;</button>
+        <!-- 游戏说明模态框 -->
+        <div id="help-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-question-circle"></i> 游戏说明</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="hint-section">
+                        <h4>游戏目标</h4>
+                        <p>猜出系统随机选择的单词。单词长度可以选择（3-10个字母）。</p>
+                    </div>
+                    <div class="hint-section">
+                        <h4>如何玩</h4>
+                        <p>1. 点击下划线或字母输入字母<br>
+                           2. 填满一行后点击"检查"按钮<br>
+                           3. 系统会给出每个字母的反馈<br>
+                           4. 根据反馈继续猜测，直到猜出单词</p>
+                    </div>
+                    <div class="hint-section">
+                        <h4>反馈说明</h4>
+                        <p>✓ 绿色勾：字母正确且位置正确<br>
+                           ○ 黄色半勾：字母正确但位置错误<br>
+                           ✗ 红色叉：字母不存在于单词中</p>
+                    </div>
+                    <div class="hint-section">
+                        <h4>提示功能</h4>
+                        <p>候选字母面板会显示已确认的字母位置和可能的候选字母，帮助你推理。</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn confirm-btn close-modal">开始游戏</button>
+                </div>
             </div>
-            <div class="modal-body">
-                <div class="shortcut">
-                    <span class="key">字母 A-Z</span>
-                    <span class="desc">输入字母</span>
+        </div>
+
+        <!-- 关于游戏模态框 -->
+        <div id="about-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-info-circle"></i> 关于游戏</h3>
+                    <button class="close-modal">&times;</button>
                 </div>
-                <div class="shortcut">
-                    <span class="key">Backspace</span>
-                    <span class="desc">删除上一个字母</span>
+                <div class="modal-body">
+                    <div class="about-section">
+                        <h4>企鹅猜词</h4>
+                        <p>开发者：林昱辰</p>
+                        <p>致敬世界上跑得最快的企鹅</p>
+                        <ul>
+                            <li>响应式设计，完美适配手机和电脑</li>
+                            <li>智能词库，自动识别可用单词长度</li>
+                            <li>候选字母提示，帮助推理</li>
+                            <li>完整历史记录，可回顾游戏过程</li>
+                            <li>暗色/亮色主题切换</li>
+                        </ul>
+                        <p>词库：高中高考英语词汇。</p>
+                        <p class="version">版本: 2.0.0 | 更新日期: 2026年1月</p>
+                    </div>
                 </div>
-                <div class="shortcut">
-                    <span class="key">Enter</span>
-                    <span class="desc">提交猜测</span>
+                <div class="modal-footer">
+                    <button class="btn confirm-btn close-modal">关闭</button>
                 </div>
-                <div class="shortcut">
-                    <span class="key">Esc</span>
-                    <span class="desc">关闭所有模态框</span>
-                </div>
-                <div class="shortcut">
-                    <span class="key">Tab</span>
-                    <span class="desc">在输入框之间切换</span>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn confirm-btn close-modal">知道了</button>
             </div>
         </div>
     </div>
